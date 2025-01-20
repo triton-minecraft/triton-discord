@@ -16,22 +16,38 @@ public class TritonDiscord {
 	private static final Logger logger = LoggerFactory.getLogger(TritonDiscord.class);
 	public static JDA jda;
 
-	public static void main(String[] args) {
+	private static String getDiscordToken() {
+		// Try environment variable first
+		String token = System.getenv("DISCORD_TOKEN");
+		if (token != null && !token.trim().isEmpty()) {
+			logger.info("using discord token from environment");
+			return token;
+		}
+
+		// Fall back to config.properties
 		Properties props = new Properties();
 		try (InputStream input = TritonDiscord.class.getClassLoader().getResourceAsStream("config.properties")) {
 			if (input == null) {
 				logger.error("unable to find config.properties in resources");
-				return;
+				return null;
 			}
 			props.load(input);
+			token = props.getProperty("discord.token");
+			if (token != null && !token.trim().isEmpty()) {
+				logger.info("using discord token from config.properties");
+				return token;
+			}
 		} catch (Exception e) {
 			logger.error("error loading config.properties", e);
-			return;
 		}
 
-		String token = props.getProperty("discord.token");
+		logger.error("discord token not found in environment or config");
+		return null;
+	}
+
+	public static void main(String[] args) {
+		String token = getDiscordToken();
 		if (token == null) {
-			logger.error("discord token not found in config");
 			return;
 		}
 
