@@ -1,10 +1,15 @@
 package dev.kyriji.discord;
 
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,12 +21,12 @@ public class TritonDiscord {
 	private static final Logger logger = LoggerFactory.getLogger(TritonDiscord.class);
 	public static JDA jda;
 
-	private static String getDiscordToken() {
+	private static String getMongoURI() {
 		// Try environment variable first
-		String token = System.getenv("DISCORD_TOKEN");
-		if (token != null && !token.trim().isEmpty()) {
-			logger.info("using discord token from environment");
-			return token;
+		String uri = System.getenv("MONGO_URI");
+		if (uri != null && !uri.trim().isEmpty()) {
+			logger.info("using mongo uri from environment");
+			return uri;
 		}
 
 		// Fall back to config.properties
@@ -32,22 +37,35 @@ public class TritonDiscord {
 				return null;
 			}
 			props.load(input);
-			token = props.getProperty("discord.token");
-			if (token != null && !token.trim().isEmpty()) {
-				logger.info("using discord token from config.properties");
-				return token;
+			uri = props.getProperty("mongo.uri");
+			if (uri != null && !uri.trim().isEmpty()) {
+				logger.info("using mongo uri from config.properties");
+				return uri;
 			}
 		} catch (Exception e) {
 			logger.error("error loading config.properties", e);
 		}
 
-		logger.error("discord token not found in environment or config");
+		logger.error("mongo uri not found in environment or config");
 		return null;
 	}
 
 	public static void main(String[] args) {
-		String token = getDiscordToken();
-		if (token == null) {
+		String uri = getMongoURI();
+		if (uri == null) return;
+
+		Document document;
+		try (MongoClient mongoClient = MongoClients.create(uri)) {
+			MongoDatabase database = mongoClient.getDatabase("configuration");
+			MongoCollection<Document> collection = database.getCollection("discord");
+			document = collection.find().first();
+			if (document != null) {
+				logger.info(document.toJson());
+			} else {
+				logger.error("could not find document");
+			}
+		} catch (Exception e) {
+			logger.error("error fetching document", e);
 			return;
 		}
 
@@ -61,7 +79,7 @@ public class TritonDiscord {
 				GatewayIntent.MESSAGE_CONTENT
 		);
 
-		jda = JDABuilder.create(token, intents)
+		jda = JDABuilder.create(document.getString("discordToken"), intents)
 				.addEventListeners(new TestListener())
 				.build();
 
