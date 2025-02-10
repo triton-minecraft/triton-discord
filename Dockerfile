@@ -3,7 +3,7 @@ FROM gradle:8.10-jdk21 AS build
 WORKDIR /app
 COPY . .
 
-RUN gradlew shadowJar
+RUN ./gradlew shadowJar
 
 FROM eclipse-temurin:21-jre-alpine
 
