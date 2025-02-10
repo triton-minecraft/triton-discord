@@ -1,8 +1,12 @@
 FROM gradle:8.10-jdk21 AS build
 
 WORKDIR /app
-COPY . .
+COPY build.gradle.kts settings.gradle.kts ./
+COPY gradle gradle
+COPY gradlew ./
+RUN ./gradlew dependencies
 
+COPY src src
 RUN ./gradlew shadowJar
 
 FROM eclipse-temurin:21-jre-alpine

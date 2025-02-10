@@ -27,5 +27,7 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: kyrokrypt/triton-discord:latest
-          cache-from: type=registry,ref=kyrokrypt/triton-discord:latest
-          cache-to: type=inline
+          cache-from: |
+            type=registry,ref=kyrokrypt/triton-discord:buildcache
+          cache-to: |
+            type=registry,ref=kyrokrypt/triton-discord:buildcache,mode=max
