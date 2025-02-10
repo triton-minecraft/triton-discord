@@ -26,14 +26,18 @@ public class TritonDiscord {
 		String uri = System.getenv("MONGO_URI");
 		if (uri != null && !uri.trim().isEmpty()) {
 			logger.info("using mongo uri from environment");
+			logger.info(uri);
 			return uri;
 		}
+
+		logger.info("fallback");
 
 		// Fall back to config.properties
 		Properties props = new Properties();
 		try (InputStream input = TritonDiscord.class.getClassLoader().getResourceAsStream("config.properties")) {
 			if (input == null) {
-				logger.error("unable to find config.properties in resources");
+				logger.error("unable to find config.properties in resources. if this is running in a docker container, " +
+						"you should be using the MONGO_URI environment variable");
 				return null;
 			}
 			props.load(input);
