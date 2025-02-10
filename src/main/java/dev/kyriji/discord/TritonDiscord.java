@@ -36,8 +36,7 @@ public class TritonDiscord {
 		Properties props = new Properties();
 		try (InputStream input = TritonDiscord.class.getClassLoader().getResourceAsStream("config.properties")) {
 			if (input == null) {
-				logger.error("unable to find config.properties in resources. if this is running in a docker container, " +
-						"you should be using the MONGO_URI environment variable");
+				logger.error("unable to find config.properties in resources. THIS ONLY WORKS LOCALLY");
 				return null;
 			}
 			props.load(input);
