@@ -4,6 +4,8 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import dev.kyriji.discord.controllers.EnvManager;
+import dev.kyriji.discord.models.EnvData;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -13,54 +15,21 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
 import java.util.EnumSet;
-import java.util.Properties;
 
 public class TritonDiscord {
 	private static final Logger logger = LoggerFactory.getLogger(TritonDiscord.class);
 	public static JDA jda;
 
-	private static String getMongoURI() {
-		// Try environment variable first
-		String uri = System.getenv("MONGO_URI");
-		if (uri != null && !uri.trim().isEmpty()) {
-			logger.info("using mongo uri from environment");
-			logger.info(uri);
-			return uri;
-		}
-
-		logger.info("fallback");
-
-		// Fall back to config.properties
-		Properties props = new Properties();
-		try (InputStream input = TritonDiscord.class.getClassLoader().getResourceAsStream("config.properties")) {
-			if (input == null) {
-				logger.error("unable to find config.properties in resources. THIS ONLY WORKS LOCALLY");
-				return null;
-			}
-			props.load(input);
-			uri = props.getProperty("mongo.uri");
-			if (uri != null && !uri.trim().isEmpty()) {
-				logger.info("using mongo uri from config.properties");
-				return uri;
-			}
-		} catch (Exception e) {
-			logger.error("error loading config.properties", e);
-		}
-
-		logger.error("mongo uri not found in environment or config");
-		return null;
-	}
-
 	public static void main(String[] args) {
-		String uri = getMongoURI();
-		if (uri == null) return;
+		EnvManager.init();
+
+		EnvData envData = EnvManager.getEnvData();
 
 		Document document;
-		try (MongoClient mongoClient = MongoClients.create(uri)) {
-			MongoDatabase database = mongoClient.getDatabase("configuration");
-			MongoCollection<Document> collection = database.getCollection("discord");
+		try (MongoClient mongoClient = MongoClients.create(envData.uri())) {
+			MongoDatabase database = mongoClient.getDatabase(envData.database());
+			MongoCollection<Document> collection = database.getCollection(envData.collection());
 			document = collection.find().first();
 			if (document != null) {
 				logger.info(document.toJson());
@@ -88,9 +57,8 @@ public class TritonDiscord {
 
 		CommandListUpdateAction commands = jda.updateCommands();
 		commands.addCommands(
-				Commands.slash("ping", "Makes the bot say what you tell it to")
-		);
-		commands.queue();
+				Commands.slash("ping", "Test ping command")
+		).queue();
 
 		try {
 			jda.awaitReady();
