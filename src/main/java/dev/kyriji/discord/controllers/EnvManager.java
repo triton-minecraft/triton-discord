@@ -33,11 +33,11 @@ public class EnvManager {
 			logger.info("could not find env variable MONGO_URI");
 			return false;
 		} else if(database == null || database.trim().isEmpty()) {
-			logger.info("could not find env variable MONGO_DATABASE");
-			return false;
+			logger.info("could not find env variable MONGO_DATABASE, defaulting to 'configuration'");
+			database = "configuration";
 		} else if (collection == null || collection.trim().isEmpty()) {
-			logger.info("could not find env variable MONGO_COLLECTION");
-			return false;
+			logger.info("could not find env variable MONGO_COLLECTION, defaulting to 'discord'");
+			collection = "discord";
 		}
 
 		logger.info("fetched env data from system environment");
@@ -66,8 +66,10 @@ public class EnvManager {
 			logger.info("could not find env variable MONGO_URI");
 			return false;
 		} else if(database == null || database.trim().isEmpty()) {
+			logger.info("could not find env variable MONGO_DATABASE, defaulting to 'configuration'");
 			database = "configuration";
 		} else if (collection == null || collection.trim().isEmpty()) {
+			logger.info("could not find env variable MONGO_COLLECTION, defaulting to 'discord'");
 			collection = "discord";
 		}
 
